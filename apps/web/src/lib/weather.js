@@ -5,6 +5,7 @@
 
 import SunCalcImport from 'suncalc';
 import { WEATHER_PROXY_URL, METNO_URL, WEATHER_DAYS, CONTACT_EMAIL, SITE_URL } from './config.js';
+import { zonedTimeToUtc } from './tz.js';
 const SITE_ORIGIN = SITE_URL || 'https://stive.local';
 
 const DAY = 86400000;
@@ -90,21 +91,11 @@ function normWeatherapi(j, days) {
   };
 }
 // Interpret "YYYY-MM-DD HH:mm" wall time in tz as a UTC epoch.
+// Reuses the shared IANA engine (lib/tz.js) — no duplicated offset logic.
 function wallToUtc(s, tz) {
   const m = s.match(/(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/); if (!m) return null;
   const [, y, mo, d, h, mi] = m.map(Number);
-  let guess = Date.UTC(y, mo - 1, d, h, mi);
-  for (let i = 0; i < 3; i++) {
-    const p = zonedPartsLite(guess, tz);
-    const off = (Date.UTC(p.y, p.mo - 1, p.d, p.h, p.mi) - guess) / 60000;
-    guess = Date.UTC(y, mo - 1, d, h, mi) - off * 60000;
-  }
-  return guess;
-}
-function zonedPartsLite(t, tz) {
-  const f = new Intl.DateTimeFormat('en-US', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false });
-  const o = {}; for (const x of f.formatToParts(new Date(t))) if (x.type!=='literal') o[x.type]=x.value;
-  return { y:+o.year, mo:+o.month, d:+o.day, h:+(o.hour==='24'?0:o.hour), mi:+o.minute };
+  try { return zonedTimeToUtc(y, mo, d, h, mi, 0, tz).utcMs; } catch { return null; }
 }
 function diffHm(a, b) {
   const [ah, am] = a.match(/(\d+):(\d+)/).slice(1).map(Number);
@@ -278,6 +269,19 @@ export function convertTemp(c, unit) { return unit === 'f' && c != null ? Math.r
 export function convertWind(kph, unit) { return unit === 'mph' && kph != null ? Math.round(kph * 0.621371 * 10) / 10 : kph; }
 export const tempUnitLabel = u => u === 'f' ? '°F' : '°C';
 export const windUnitLabel = u => u === 'mph' ? 'mph' : 'km/h';
+
+/** Test/maintenance hook: clear the in-memory + localStorage weather caches and
+ *  any in-flight dedupe state. */
+export function __clearWeatherCache() {
+  mem.clear();
+  inflight.clear();
+  try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(LS_PREFIX)) localStorage.removeItem(k);
+    }
+  } catch { /* storage unavailable */ }
+}
 
 /** Sun/moon calculations (SunCalc) for a coordinate & date. */
 export function astroFor(city, dateStr) {
