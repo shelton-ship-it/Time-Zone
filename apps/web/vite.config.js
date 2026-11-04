@@ -13,7 +13,7 @@ function weatherProxy() {
   return {
     name: 'stive-weather-proxy',
     configureServer(server) {
-      server.middlewares.use('/api/weather/current', async (req, res) => {
+      server.middlewares.use(process.env.API_WEATHER_PATH || '/api/weather/current', async (req, res) => {
         res.setHeader('Content-Type', 'application/json');
         const key = process.env.WEATHERAPI_KEY; // server-side secret — not bundled
         if (!key) { res.end(JSON.stringify({ __proxy: 'no-key', error: 'WEATHERAPI_KEY is not configured on the server. Falling back to MET Norway.' })); return; }

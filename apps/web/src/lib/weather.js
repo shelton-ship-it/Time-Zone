@@ -4,12 +4,14 @@
 // All UI components consume getWeather() — never a provider directly.
 
 import SunCalcImport from 'suncalc';
+import { WEATHER_PROXY_URL, METNO_URL, WEATHER_DAYS, CONTACT_EMAIL, SITE_URL } from './config.js';
+const SITE_ORIGIN = SITE_URL || 'https://stive.local';
 
 const DAY = 86400000;
 const MEM_TTL = 10 * 60000;      // in-memory dedupe window
 const LS_TTL = 3 * 3600000;      // localStorage cache TTL (3 h)
 const LS_PREFIX = 'stive-wx-v1:';
-const MAX_DAYS = Number(import.meta.env.VITE_WEATHER_DAYS || 7); // free plan: 3, Starter: 7
+const MAX_DAYS = WEATHER_DAYS; // free plan: 3, Starter: 7 — configured via VITE_WEATHER_DAYS
 
 // ── normalized model ─────────────────────────────────────────────────────────
 // {
@@ -226,14 +228,17 @@ function moonPhaseName(doy, y, m, d) {
 // ── Provider calls ───────────────────────────────────────────────────────────
 async function viaProxy(city) {
   const params = new URLSearchParams({ q: `${city.lat},${city.lon}` });
-  const j = await fetchJson(`/api/weather/current?${params}`);
+  const j = await fetchJson(`${WEATHER_PROXY_URL}?${params}`);
   if (!j || !j.__proxy) throw new Error('proxy unavailable');
   if (j.__proxy !== 'ok') throw Object.assign(new Error(j.error || 'proxy error'), { status: j.__proxy });
   return normWeatherapi(j.data, MAX_DAYS);
 }
+const metUserAgent = `StiveTimezone/1.0 (+${SITE_ORIGIN}${CONTACT_EMAIL ? '; ' + CONTACT_EMAIL : ''})`;
 async function viaMetno(city) {
-  const url = `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${Number(city.lat).toFixed(4)}&lon=${Number(city.lon).toFixed(4)}`;
-  const j = await fetchJson(url, { headers: { 'Accept': 'application/vnd.met.no+json' } });
+  const url = `${METNO_URL}?lat=${Number(city.lat).toFixed(4)}&lon=${Number(city.lon).toFixed(4)}`;
+  // Browsers set User-Agent itself (forbidden header); we still send the
+  // compliant app identifier via a custom header + document the requirement.
+  const j = await fetchJson(url, { headers: { 'Accept': 'application/vnd.met.no+json', 'X-Unified-Type-User-Agent': metUserAgent } });
   return normMetno(j, city.lat, city.lon, city.tz);
 }
 
@@ -291,7 +296,7 @@ export function astroFor(city, dateStr) {
     blueHourStart: iso(times.dawn), blueHourEnd: iso(times.sunrise),
     dusk: iso(times.dusk), dawn: iso(times.dawn),
     daylightMin: valid(times.sunrise) && valid(times.sunset) ? Math.round((times.sunset - times.sunrise) / 60000) : (valid(times.nadir) && times.civilDawn <= times.civilDusk ? 1440 : null),
-    polarDay: times.sunrise <= times.nadir || (isNaN(times.sunrise.getTime()) === false && isNaN(times.sunset.getTime())),
+    polarDay: isNaN(times.sunrise.getTime()) || isNaN(times.sunset.getTime()),
     moonPhase: Math.round(illum.phase * 100) / 100,
     moonName: moonPhaseFromPhase(illum.phase),
     moonIllumPct: Math.round(illum.frac * 100),
