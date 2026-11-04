@@ -1,5 +1,6 @@
 // ── Shareable links (state lives entirely in the URL — no accounts, no PII) ──
 import { zonedTimeToUtc } from './tz.js';
+import { SITE_URL, GOOGLE_CAL_URL } from './config.js';
 
 export function encodeConversion({ sourceTz, destTzs, iso }) {
   const p = new URLSearchParams();
@@ -39,8 +40,8 @@ export function decodeMeeting(search) {
 }
 
 export function absoluteUrl(path) {
-  if (typeof window === 'undefined') return path;
-  return window.location.origin + path;
+  const base = SITE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+  return base ? base + path : path;
 }
 
 export async function copyText(text) {
@@ -75,5 +76,5 @@ export function googleCalUrl({ title, startUtc, durationMin, details }) {
     dates: `${fmt(startUtc)}/${fmt(startUtc + durationMin * 60000)}`,
     details: details || '', trv: 'tp',
   });
-  return `https://calendar.google.com/calendar/render?${p.toString()}`;
+  return `${GOOGLE_CAL_URL}?${p.toString()}`;
 }

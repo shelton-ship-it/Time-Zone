@@ -1,5 +1,5 @@
 // ── Travel engine: jet lag, flight time, sleep plan ──────────────────────────
-import { offsetMinAt, zonedParts } from './tz.js';
+import { offsetMinAt, zonedParts, zonedTimeToUtc } from './tz.js';
 
 const R = 6371; // km
 const rad = d => d * Math.PI / 180;
@@ -68,4 +68,4 @@ export function travelTimeline({ depCity, arrCity, depDateStr, depHour, depMin, 
     crossedMidnight: ap.day !== dp.day || ap.month !== dp.month || ap.year !== dp.year,
   };
 }
-import * as Tz from './tz.js';
+
