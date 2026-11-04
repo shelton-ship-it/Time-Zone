@@ -6,6 +6,7 @@ import { CitySearch, fmtTime, fmtDate, useSeoTitle, Notice } from '../components
 import CityClockCard from '../components/CityClockCard.jsx';
 import { POPULAR, findCityBySlug, userZoneCity } from '../lib/cities.js';
 import { zonedParts, offsetLabel, userZone } from '../lib/tz.js';
+import { citySlug } from '../lib/cities.js';
 import { getWeather } from '../lib/weather.js';
 import { quickConvert } from '../components/QuickConverter.jsx';
 import { loadCountdowns } from '../lib/countdowns.js';
@@ -33,7 +34,7 @@ export default function Home() {
             <p className="subtitle" style={{ margin: '8px 0 0' }}>Global time, weather & planning for every city on Earth.</p>
           </div>
           <div style={{ minWidth: 260, flex: 1 }}>
-            <CitySearch onSelect={c => nav(`/timezone/${slugOf(c.city)}`)} placeholder="Search any city, country or timezone…" autoFocus={false} />
+            <CitySearch onSelect={c => nav(`/timezone/${citySlug(c.city)}`)} placeholder="Search any city, country or timezone…" autoFocus={false} />
             <div className="row" style={{ marginTop: 10 }}>
               <Link className="btn primary" to="/meeting-planner">Plan a meeting</Link>
               <Link className="btn" to="/converter">Convert times</Link>

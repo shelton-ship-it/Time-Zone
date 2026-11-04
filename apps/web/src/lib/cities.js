@@ -1,6 +1,6 @@
 // ── City / timezone dataset helpers ───────────────────────────────────────────
 import raw from '../data/cities.json';
-import { isValidZone, offsetMinAt } from './tz.js';
+import { isValidZone, offsetMinAt, userZone } from './tz.js';
 
 export const CITIES = raw.filter(c => isValidZone(c.tz));
 
@@ -18,6 +18,10 @@ export function citySlug(city) {
 }
 export function findCityBySlug(slug) {
   return CITIES.find(c => citySlug(c.city) === slug) || null;
+}
+/** All dataset cities sharing an IANA zone (for related-city comparisons). */
+export function citiesInZone(tz) {
+  return CITIES.filter(c => c.tz === tz);
 }
 export function findCity(name, tz) {
   const n = name.toLowerCase();
@@ -49,6 +53,11 @@ export function searchCities(q, limit = 12) {
 
 export const POPULAR = ['Maputo', 'London', 'New York', 'Tokyo', 'Dubai', 'Sydney']
   .map(n => CITIES.find(c => c.city === n)).filter(Boolean);
+
+/** Best-matching dataset city for a device timezone (used as fallback reference). */
+export function userZoneCity(tz = userZone()) {
+  return CITIES.find(c => c.tz === tz) || null;
+}
 
 export function zonesWithOffsets(instant = Date.now()) {
   // one representative label per zone id, with current offsets (for Explorer)

@@ -56,9 +56,9 @@ const fmtHM = h => `${String(Math.floor(mod24(h))).padStart(2, '0')}:${String(Ma
 
 /** Arrival planning: departure local datetime → arrival local datetime in destination. */
 export function travelTimeline({ depCity, arrCity, depDateStr, depHour, depMin, durationH }) {
-  const p = zonedParts(Date.parse(depDateStr + 'T00:00:00Z'), depCity.tz); // just to validate zone
-  const { zonedTimeToUtc } = Tz;
-  const depUtc = zonedTimeToUtc(p.year, p.month, p.day, depHour, depMin, 0, depCity.tz).utcMs;
+  // Interpret the departure wall time in the departure city's real zone (DST-safe).
+  const [dy, dm, dd] = depDateStr.split('-').map(Number);
+  const depUtc = zonedTimeToUtc(dy, dm, dd, depHour, depMin, 0, depCity.tz).utcMs;
   const arrUtc = depUtc + durationH * 3600000;
   const dp = zonedParts(depUtc, depCity.tz), ap = zonedParts(arrUtc, arrCity.tz);
   return {

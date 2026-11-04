@@ -78,20 +78,20 @@ export default function Timezones() {
         </div>
       </div>
 
-      <h2>DST calendar (next months)</h2>
-      <div className="grid g2">
-        {dstCalendar.map(([month, list]) => (
-          <div key={month} className="card">
-            <h3 className="mt0 mb0">{new Date(month + '-01').toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' })}</h3>
-            <ul className="mono" style={{ fontSize: 13, paddingLeft: 18, margin: '8px 0 0' }}>
-              {list.slice(0, 12).map(t => (
-                <li key={t.tz}>{new Date(t.atMs).toISOString().replace('T', ' ').slice(0, 16)} UTC — <strong>{t.tz}</strong> {t.to?.label ? `→ ${t.to.label}` : ''} {t.type === 'spring' ? '🔺 clocks forward' : '🔻 clocks back'}</li>
-              ))}
-              {list.length > 12 && <li className="dim">+{list.length - 12} more zones</li>}
-            </ul>
-          </div>
-        ))}
-      </div>
+        <h2>DST calendar (next months)</h2>
+        <div className="grid g2">
+          {dstCalendar.map(([month, list]) => (
+            <div key={month} className="card">
+              <h3 className="mt0 mb0">{new Date(month + '-01').toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' })}</h3>
+              <ul className="mono" style={{ fontSize: 13, paddingLeft: 18, margin: '8px 0 0' }}>
+                {list.slice(0, 12).map(t => (
+                  <li key={t.tz}>{new Date(t.atUtcMs).toISOString().replace('T', ' ').slice(0, 16)} UTC — <strong>{t.tz}</strong> clocks {t.direction === 'forward' ? 'forward 🔺' : 'back 🔻'} ({t.from} → {t.to})</li>
+                ))}
+                {list.length > 12 && <li className="dim">+{list.length - 12} more zones</li>}
+              </ul>
+            </div>
+          ))}
+        </div>
 
       <h2>Understanding abbreviations</h2>
       <div className="card">
